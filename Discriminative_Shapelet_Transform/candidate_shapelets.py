@@ -62,7 +62,8 @@ def assess_candidate(S, orderline, distances, y):
         # Calculate IG
         ig = entropy_total - ((n_left / n) * entropy_left + (n_right / n) * entropy_right)
         
-        print(f"Split at {i}: IG = {ig:.4f}, left_labels = {left_labels}, right_labels = {right_labels}")
+        # print(f"Split at {i}: IG = {ig:.4f}, left_labels = {left_labels}, right_labels = {right_labels}")
+        print(f"Split at {i}: IG = {ig:.4f}")
         
         # Update best IG
         if ig > best_ig:

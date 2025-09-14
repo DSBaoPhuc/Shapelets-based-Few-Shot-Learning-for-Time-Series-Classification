@@ -8,12 +8,17 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from sklearn.impute import SimpleImputer
+import joblib
+import os
 
 # file_path = './result(IG)/covered_shapelets.xlsx'
 # file_path = './result(IG)/pruned_shapelets.xlsx'
-file_path = './result(IG)/pruned_covered.xlsx'
+# file_path = './result(IG)/pruned_covered.xlsx'
+# file_path = 'pruned_shapelets_GP.csv'
+file_path = 'candidate_shapelets_ITL.csv'
 
-data = pd.read_excel(file_path)
+# data = pd.read_excel(file_path)
+data = pd.read_csv(file_path)
 
 print("First few rows of data:")
 print(data.head())
@@ -38,10 +43,12 @@ print(f"Number of NaN values in features: {nan_count}")
 print("Imputing missing values...")
 imputer = SimpleImputer(strategy='mean')
 X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+joblib.dump(imputer, os.path.join("saved_models", "imputer.pkl"))
 
 y = data['class_label']
 
-X_train, X_test, y_train, y_test = train_test_split(X_imputed, y, test_size=0.3, random_state=42)
+# X_train, X_test, y_train, y_test = train_test_split(X_imputed, y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = X_imputed, X_imputed, y, y
 
 print(f"Data shape: {data.shape}")
 print(f"Features shape: {X.shape}")
@@ -54,7 +61,6 @@ classifiers = {
     "1-NN": KNeighborsClassifier(n_neighbors=1),
     "Random Forest": RandomForestClassifier(random_state=42),
     "SVM": SVC(random_state=42),
-    "Naive Bayes": GaussianNB()
 }
 
 for name, clf in classifiers.items():
@@ -63,15 +69,35 @@ for name, clf in classifiers.items():
     accuracy = accuracy_score(y_test, y_pred)
     print("---------------------------------")
     print(f"{name} Accuracy: {accuracy:.2f}")
-    print(f"First 5 predictions vs actual: {list(zip(y_pred[:5], y_test.iloc[:5]))}")
+    print(f"Top predictions vs actual: {list(zip(y_pred[:5], y_test.iloc[:5]))}")
     
     cm = confusion_matrix(y_test, y_pred)
     print(f"{name} Confusion Matrix:")
     print(cm)
     
-    plt.figure(figsize=(8, 6))
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
-    disp.plot(cmap=plt.cm.Blues)
-    plt.title(f'Confusion Matrix - {name}')
-    plt.savefig(f'confusion_matrix_{name}.png')
-    plt.close()
+    # plt.figure(figsize=(8, 6))
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
+    # disp.plot(cmap=plt.cm.Blues)
+    # plt.title(f'Confusion Matrix - {name}')
+    # plt.savefig(f'confusion_matrix_{name}.png')
+    # plt.close()
+    
+    save_dir = "./saved_models"
+os.makedirs(save_dir, exist_ok=True)
+
+for name, clf in classifiers.items():
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print("---------------------------------")
+    print(f"{name} Accuracy: {accuracy:.2f}")
+    print(f"Top predictions vs actual: {list(zip(y_pred[:5], y_test.iloc[:5]))}")
+    
+    cm = confusion_matrix(y_test, y_pred)
+    print(f"{name} Confusion Matrix:")
+    print(cm)
+
+    # === Lưu model ===
+    model_filename = os.path.join(save_dir, f"{name.replace(' ', '_')}_model.pkl")
+    joblib.dump(clf, model_filename)
+    print(f"Saved {name} model to {model_filename}")

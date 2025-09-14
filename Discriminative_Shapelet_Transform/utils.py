@@ -55,64 +55,109 @@ def save_shapelets(shapelets, filename="shapelets.csv", to_excel=False):
         df.to_csv(filename, index=False)
         
         
+# def subdist(x, y):
+#     """
+#     Algorithm 3: Calculate minimum normalized distance between time series x and y
+    
+#     Parameters:
+#     -----------
+#     x : numpy array
+#         First time series (shapelet)
+#     y : numpy array
+#         Second time series
+        
+#     Returns:
+#     --------
+#     float
+#         Normalized distance between x and y
+#     """
+#     if len(x) > len(y):
+#         return float('inf')
+    
+#     best_sum = float('inf')  # MAX_VALUE
+    
+#     x = z_norm(x)
+    
+#     for i in range(len(y) - len(x) + 1):
+#         sum_dist = 0
+        
+#         z = z_norm(y[i:i+len(x)])
+        
+#         for j in range(len(x)):
+#             sum_dist += (z[j] - x[j])**2
+        
+#         best_sum = min(best_sum, sum_dist)
+    
+#     return np.sqrt(best_sum / len(x))
+
+
+# def z_norm(series):
+#     """
+#     Z-normalize a time series
+    
+#     Parameters:
+#     -----------
+#     series : numpy array
+#         Time series to normalize
+        
+#     Returns:
+#     --------
+#     numpy array
+#         Z-normalized time series
+#     """
+#     if len(series) == 0:
+#         return series
+        
+#     mean = np.mean(series)
+#     std = np.std(series)
+    
+#     # If standard deviation is zero, return zeros
+#     if std == 0:
+#         return np.zeros_like(series)
+    
+#     return (series - mean) / std
+
+def z_norm(ts):
+    """Z-normalization of a time series"""
+    mean = np.mean(ts)
+    std = np.std(ts)
+    if std == 0:
+        return np.zeros_like(ts)  # tránh chia cho 0
+    return (ts - mean) / std
+
 def subdist(x, y):
     """
-    Algorithm 3: Calculate minimum normalized distance between time series x and y
+    Calculate minimum length-normalized Euclidean distance 
+    between time series x (shapelet) and subsequences of y.
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     x : numpy array
         First time series (shapelet)
     y : numpy array
         Second time series
         
-    Returns:
-    --------
+    Returns
+    -------
     float
-        Normalized distance between x and y
+        Minimum normalized distance between x and y
     """
     if len(x) > len(y):
         return float('inf')
     
-    best_sum = float('inf')  # MAX_VALUE
-    
+    # z-normalize shapelet
     x = z_norm(x)
+    m = len(x)
+    best_dist = float('inf')
     
-    for i in range(len(y) - len(x) + 1):
-        sum_dist = 0
+    # slide x over y
+    for i in range(len(y) - m + 1):
+        y_sub = z_norm(y[i:i+m])
         
-        z = z_norm(y[i:i+len(x)])
+        # length-normalized Euclidean distance
+        dist = np.sqrt(np.sum((x - y_sub) ** 2) / m)
         
-        for j in range(len(x)):
-            sum_dist += (z[j] - x[j])**2
-        
-        best_sum = min(best_sum, sum_dist)
+        if dist < best_dist:
+            best_dist = dist
     
-    return np.sqrt(best_sum / len(x))
-
-
-def z_norm(series):
-    """
-    Z-normalize a time series
-    
-    Parameters:
-    -----------
-    series : numpy array
-        Time series to normalize
-        
-    Returns:
-    --------
-    numpy array
-        Z-normalized time series
-    """
-    if len(series) == 0:
-        return series
-        
-    mean = np.mean(series)
-    std = np.std(series)
-    
-    # If standard deviation is zero, return zeros
-    if std == 0:
-        return np.zeros_like(series)
-    
-    return (series - mean) / std
+    return best_dist

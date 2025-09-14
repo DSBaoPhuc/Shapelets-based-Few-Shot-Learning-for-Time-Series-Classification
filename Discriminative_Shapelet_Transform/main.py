@@ -63,15 +63,16 @@ def get_dynamic_threshold(length):
         return 1.6
     
 def candidate_shapelets_test():
+    # X_train, y_train = load_ucr_dataset_tensor('../data/Gun_Point/Gun_Point_TRAIN')
     # X_train, y_train = load_ucr_dataset_tensor('../data/ItalyPowerDemand/ItalyPowerDemand_TRAIN')
-    # X_train, y_train = load_ucr_dataset_tensor('../data/Coffee/Coffee_TRAIN')
-    X_train, y_train = load_ucr_dataset_tensor('../data/synthetic_control/synthetic_control_TRAIN')
+    X_train, y_train = load_ucr_dataset_tensor('../data/Coffee/Coffee_TRAIN')
+    # X_train, y_train = load_ucr_dataset_tensor('../data/synthetic_control/synthetic_control_TRAIN')
     
     print("Data shape:", X_train.shape)
     print("Number of classes:", len(np.unique(y_train)))
     
-    min_length = 20
-    max_length = 56
+    min_length = max(1, int(len(X_train) / 11))   # ensure integer >= 1
+    max_length = int(len(X_train) / 2)
     
     print(f"Generating candidate shapelets with lengths from {min_length} to {max_length}...")
     
@@ -99,12 +100,12 @@ def candidate_shapelets_test():
     
     print(f"Generated {len(candidates)} candidate shapelets")
     
-    save_shapelets_to_file(candidates, filename="candidate_shapelets_synthetic_control.csv", to_excel=False)
-    print("\nShapelets saved to files: candidate_shapelets_synthetic_control.csv")
-    
+    save_shapelets_to_file(candidates, filename="candidate_shapelets_coffee.csv", to_excel=False)
+    print("\nShapelets saved to files: candidate_shapelets_coffee.csv")
+
 def prun_test():
     # df = pd.read_excel('result/candidate_shapelets.xlsx')
-    df = pd.read_csv('candidate_shapelets_synthetic_control.csv')
+    df = pd.read_csv('candidate_shapelets_coffee.csv')
     df['values'] = df['values'].apply(ast.literal_eval)
 
     shapelets = []
@@ -119,19 +120,19 @@ def prun_test():
 
         s.quality = row.get('quality', 0)
         
-        s.split_threshold = 0.6 * s.length  # ...% của độ dài shapelet
-        # s.split_threshold = get_dynamic_threshold(s.length) * s.length  # Dynamic threshold based on length
+        # s.split_threshold = 0.6 * s.length  # ...% của độ dài shapelet
+        s.split_threshold = get_dynamic_threshold(s.length) * s.length  # Dynamic threshold based on length
         shapelets.append(s)
 
     pruned_shapelets = ShapeletsPruning.prune(shapelets)
 
-    save_shapelets(pruned_shapelets, filename="pruned_shapelets_synthetic_control.csv", to_excel=False)
-    print("\nShapelets saved to files: pruned_shapelets_synthetic_control.csv")
+    save_shapelets(pruned_shapelets, filename="pruned_shapelets_coffee.csv", to_excel=False)
+    print("\nShapelets saved to files: pruned_shapelets_coffee.csv")
 
 
 def coverage_test(coverage_param=4):
     # df = pd.read_excel('pruned_shapelets_Coffee.xlsx')
-    df = pd.read_csv('pruned_shapelets_synthetic_control.csv')
+    df = pd.read_csv('pruned_shapelets_coffee.csv')
     
     # df = pd.read_excel('result/pruned_shapelets.xlsx')
     df['values'] = df['values'].apply(ast.literal_eval)
@@ -147,7 +148,7 @@ def coverage_test(coverage_param=4):
         )
         
         try:
-            s.quality = float(row['quality'])  # Ép kiểu sang float
+            s.quality = float(row['quality'])
             print(f"Read quality value: {s.quality} for shapelet from series {row['source_id']}")
         except (ValueError, KeyError) as e:
             print(f"Error reading quality: {e}")
@@ -162,14 +163,14 @@ def coverage_test(coverage_param=4):
     print(f"\nSelected {len(covered_shapelets)} shapelets after coverage:")
     for i, s in enumerate(covered_shapelets):
         print(f"Shapelet {i+1}: Source ID={s.source_id}, Start={s.start_pos}, Len={s.length}, Class={s.class_label}, Quality={s.quality}")
-    
-    save_shapelets(covered_shapelets, filename="covered_shapelets_synthetic_control.csv", to_excel=False)
-    print("Saved to covered_shapelets_OliveOil.csv")
-    
-    
+
+    save_shapelets(covered_shapelets, filename="covered_shapelets_coffee.csv", to_excel=False)
+    print("Saved to covered_shapelets_coffee.csv")
+
+
 def prune_coverage():
     # df_candidate_shapelets = pd.read_excel('result(IG)/candidate_shapelets.xlsx')
-    df_candidate_shapelets = pd.read_csv('covered_shapelets_synthetic_control.csv')
+    df_candidate_shapelets = pd.read_csv('covered_shapelets_coffee.csv')
     df_candidate_shapelets['values'] = df_candidate_shapelets['values'].apply(ast.literal_eval)
         
     # Convert DataFrame rows to Shapelet objects
@@ -216,9 +217,9 @@ def prune_coverage():
     final_shapelets = PruneAndCoverage.prune_and_coverage(candidate_shapelets.copy(), coverage_param)
     for i, shapelet in enumerate(final_shapelets):
         print(f"{i}: Class {shapelet.class_label}, Quality {shapelet.quality:.4f}, Length {shapelet.length}")
-        
-    save_shapelets(final_shapelets, filename="pruned_covered_synthetic_control.csv", to_excel=False)
-    print("Saved to pruned_covered_synthetic_control.csv")
+
+    save_shapelets(final_shapelets, filename="pruned_covered_coffee.csv", to_excel=False)
+    print("Saved to pruned_covered_coffee.csv")
 
         
 def main():
@@ -228,8 +229,8 @@ def main():
     print("Testing candidate shapelet generation...")
     candidate_shapelets_test()
     prun_test()
-    # coverage_test()
-    # prune_coverage()
+    coverage_test()
+    prune_coverage()
     
 
 if __name__ == "__main__":
