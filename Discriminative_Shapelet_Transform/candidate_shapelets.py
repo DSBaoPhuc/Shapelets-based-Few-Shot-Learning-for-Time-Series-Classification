@@ -1,7 +1,6 @@
 import numpy as np
-from shapelet import *
-from utils import subdist
-
+from Discriminative_Shapelet_Transform.shapelet_uni import *
+from Discriminative_Shapelet_Transform.Univariate.utils_uni import subdist
 
 def assess_candidate(S, orderline, distances, y):
     """
@@ -199,4 +198,3 @@ def are_overlapping(shapelet1, shapelet2):
     
     # Return True if overlap is significant (e.g., more than 50%)
     return overlap_ratio > 0.5
-
