@@ -38,7 +38,7 @@ def load_ts_file(file_path):
 
 
 def load_data_multi():
-    file_path = "../data/BasicMotions/BasicMotions_TRAIN.ts"
+    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts"
     X, y = load_ts_file(file_path)
     print(f"Loaded dataset: {X.shape[0]} samples, {X.shape[1]} dimensions, {X.shape[2]} timesteps.")
     print(f"Unique labels: {np.unique(y)}")

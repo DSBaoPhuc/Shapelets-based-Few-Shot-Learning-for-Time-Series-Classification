@@ -6,7 +6,7 @@ from Discriminative_Shapelet_Transform.shapelet_filter_uni import ShapeletFilter
 # from shapelet_classifier import ShapeletClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
-from candidate_shapelets import *
+from Discriminative_Shapelet_Transform.Univariate.candidate_shapelets_uni import *
 from Discriminative_Shapelet_Transform.shapelet_pruning_uni import * 
 from Discriminative_Shapelet_Transform.shapelet_coverage_uni import *
 from Discriminative_Shapelet_Transform.prune_and_coverage_uni import *
