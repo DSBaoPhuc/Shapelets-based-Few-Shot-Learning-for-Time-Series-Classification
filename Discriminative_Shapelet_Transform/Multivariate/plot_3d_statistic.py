@@ -1,54 +1,66 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  # để matplotlib biết sử dụng 3D projection
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
-# === Đọc dữ liệu từ file CSV ===
-csv_path = "top_shapelets_multi.csv"   # đổi path nếu cần
+# === Load CSV shapelet top-k ===
+csv_path = "top_shapelets_balanced.csv"  # đổi nếu bạn lưu tên khác
 df = pd.read_csv(csv_path)
 
-# === Kiểm tra các cột cần thiết ===
-required_cols = ["id", "IG", "F_stat", "Separability"]
+# === Check required columns ===
+required_cols = ["id", "true_class", "pred_class", "start", "length",
+                 "F_stat", "Separability", "IG", "Composite_Score"]
 missing = [c for c in required_cols if c not in df.columns]
 if missing:
-    raise ValueError(f"Thiếu các cột bắt buộc trong CSV: {missing}")
+    raise ValueError(f"CSV thiếu các cột: {missing}")
 
-# === Tính Composite Score nếu chưa có ===
-if "Composite_Score" not in df.columns:
-    df["Composite_Score"] = (
-        0.4 * df["IG"] + 
-        0.3 * np.log1p(df["F_stat"]) + 
-        0.3 * df["Separability"]
-    )
+# === Normalize class mapping and colors ===
+unique_classes = sorted(df["pred_class"].unique())
+color_map = plt.cm.tab10(np.linspace(0, 1, len(unique_classes)))
+class_to_color = {cls: color_map[i] for i, cls in enumerate(unique_classes)}
 
-# === Chuẩn hóa màu theo Composite_Score ===
-colors = plt.cm.viridis(
-    (df["Composite_Score"] - df["Composite_Score"].min()) / 
-    (df["Composite_Score"].max() - df["Composite_Score"].min())
-)
+# === Colormap based on Composite Score ===
+norm_scores = (df["Composite_Score"] - df["Composite_Score"].min()) / \
+               (df["Composite_Score"].max() - df["Composite_Score"].min())
+cmap = plt.cm.viridis(norm_scores)
 
-# === Tạo biểu đồ 3D ===
-fig = plt.figure(figsize=(10, 8))
+# === Plot 3D ===
+fig = plt.figure(figsize=(14, 10))
 ax = fig.add_subplot(111, projection='3d')
 
 sc = ax.scatter(
-    df["IG"], df["F_stat"], df["Separability"],
-    c=colors, s=100, edgecolors='k', alpha=0.8
+    df["Separability"], df["F_stat"], df["IG"],
+    c=cmap, s=150,
+    edgecolors=[class_to_color[c] for c in df["pred_class"]],
+    linewidths=1.5,
+    alpha=0.92
 )
 
-# === Ghi nhãn từng điểm shapelet ===
-for _, row in df.iterrows():
-    ax.text(row["IG"], row["F_stat"], row["Separability"],
-            f'ID {int(row["id"])}', fontsize=9, color='black')
+# === Annotation for each shapelet ===
+for _, r in df.iterrows():
+    text = f"ID:{int(r['id'])}\nT:{int(r['true_class'])}/P:{int(r['pred_class'])}\n@{int(r['start'])}x{int(r['length'])}"
+    ax.text(
+        r["Separability"], r["F_stat"], r["IG"],
+        text, fontsize=7, alpha=0.85
+    )
 
-# === Nhãn và tiêu đề ===
-ax.set_xlabel("Information Gain (IG)", fontsize=12, labelpad=10)
-ax.set_ylabel("F-statistic", fontsize=12, labelpad=10)
-ax.set_zlabel("Separability", fontsize=12, labelpad=10)
-ax.set_title("3D Visualization of Top Shapelets by Quality Metrics", fontsize=14, pad=20)
+# === Axes Labels ===
+ax.set_xlabel("Separability", fontsize=14, labelpad=12)
+ax.set_ylabel("F-statistic", fontsize=14, labelpad=12)
+ax.set_zlabel("Information Gain (IG)", fontsize=14, labelpad=12)
+ax.set_title("Top-K Shapelets - Composite Score Colormap + IG as Z Axis", fontsize=16, pad=20)
 
-# === Thanh màu thể hiện Composite Score ===
-cbar = plt.colorbar(sc, ax=ax, pad=0.1, shrink=0.6)
+# === Class Legend (edgecolors) ===
+for cls in unique_classes:
+    ax.scatter([], [], [], edgecolors=class_to_color[cls],
+               facecolors="none", s=150, linewidths=2, label=f"Pred Class {cls}")
+
+ax.legend(loc="upper left", fontsize=12)
+
+# === Colormap Legend (Composite Score) ===
+mappable = plt.cm.ScalarMappable(cmap=plt.cm.viridis)
+mappable.set_array(df["Composite_Score"])
+cbar = plt.colorbar(mappable, ax=ax, shrink=0.6, pad=0.1)
 cbar.set_label("Composite Score", fontsize=12)
 
 plt.tight_layout()
