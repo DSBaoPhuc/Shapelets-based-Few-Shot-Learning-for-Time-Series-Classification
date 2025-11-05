@@ -32,7 +32,8 @@ def load_ts_file(file_path):
 
 
 def load_data_multi():
-    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts"
+    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
+    file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
     X, y = load_ts_file(file_path)
 
     print(f"Loaded dataset: {X.shape[0]} samples, {X.shape[1]} dims, {X.shape[2]} steps.")
@@ -68,55 +69,6 @@ def generate_multivariate_shapelets(X, y, L_list, num_per_length):
 def euclidean_dist(S, T):
     return np.linalg.norm(S - T)
 
-
-# -----------------------------
-# Evaluate shapelets
-# -----------------------------
-# def evaluate_multivariate_shapelets(shapelets, X, y):
-#     results = []
-
-#     unique_classes = np.unique(y)
-
-#     for idx, (shapelet, series_id, start_pos, true_class) in enumerate(tqdm(shapelets, desc="Evaluating")):
-        
-#         L = shapelet.shape[1]
-#         dists = np.zeros(len(X))
-
-#         # Compute min-dist shapelet to each series
-#         for i, sample in enumerate(X):
-#             best = np.inf
-#             for s in range(sample.shape[1] - L + 1):
-#                 segment = sample[:, s:s + L]
-#                 best = min(best, euclidean_dist(shapelet, segment))
-#             dists[i] = best
-
-#         dist_class = [dists[y == c] for c in unique_classes]
-#         f_stat, _ = f_oneway(*dist_class)
-
-#         class_mean = np.array([dc.mean() for dc in dist_class])
-#         sep = class_mean.max() - class_mean.min()
-
-#         comp = f_stat * sep
-
-#         # Predicted class = class with minimum distance mean
-#         predicted_class = unique_classes[np.argmin(class_mean)]
-
-#         # Confidence score (larger gap = more confident)
-#         sorted_means = np.sort(class_mean)
-#         confidence = sorted_means[1] - sorted_means[0]
-
-#         results.append((
-#             idx, series_id, start_pos, L,
-#             true_class, predicted_class,
-#             confidence, f_stat, sep, comp
-#         ))
-
-#     df = pd.DataFrame(results, columns=[
-#         'id', 'series_id', 'start', 'length',
-#         'true_class', 'pred_class', 'confidence',
-#         'F_stat', 'Separability', 'Composite_Score'
-#     ])
-#     return df
 
 @njit(fastmath=True)
 def z_norm_fast(ts):
@@ -290,14 +242,14 @@ if __name__ == "__main__":
 
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
-    df_topk = save_topk_balanced(shapelets, df_scores, top_k, "top_shapelets_balanced.csv")
+    df_topk = save_topk_balanced(shapelets, df_scores, top_k, "top_shapelets_balanced_SWJ.csv")
 
-    print("Visualizing top shapelets...")
-    for idx, row in df_topk.iterrows():
-        sid = row["id"]
-        shapelet, series_id, start, label = (shapelets[sid][0],
-                                             shapelets[sid][1],
-                                             shapelets[sid][2],
-                                             shapelets[sid][3])
+    # print("Visualizing top shapelets...")
+    # for idx, row in df_topk.iterrows():
+    #     sid = row["id"]
+    #     shapelet, series_id, start, label = (shapelets[sid][0],
+    #                                          shapelets[sid][1],
+    #                                          shapelets[sid][2],
+    #                                          shapelets[sid][3])
 
-        plot_shapelet_on_series(shapelet, X, series_id, start, label, idx)
+    #     plot_shapelet_on_series(shapelet, X, series_id, start, label, idx)
