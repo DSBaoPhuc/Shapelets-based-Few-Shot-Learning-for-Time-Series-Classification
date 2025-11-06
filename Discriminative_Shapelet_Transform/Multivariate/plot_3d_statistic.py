@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 # === Load CSV shapelet top-k ===
-csv_path = "Shapelet_extract/top_shapelets_SCP1.csv"
+csv_path = "Shapelet_extract/top_shapelets_CK.csv"
 df = pd.read_csv(csv_path)
 
 # === Check required columns ===
@@ -38,7 +38,8 @@ sc = ax.scatter(
 
 # === Annotation for each shapelet ===
 for _, r in df.iterrows():
-    text = f"ID:{int(r['id'])}\nT:{int(r['true_class'])}/P:{int(r['pred_class'])}\n@{int(r['start'])}x{int(r['length'])}"
+    # text = f"ID:{int(r['id'])}\nT:{int(r['true_class'])}/P:{int(r['pred_class'])}\n@{int(r['start'])}x{int(r['length'])}"
+    text = f"T:{int(r['true_class'])}/P:{int(r['pred_class'])}\nL:{int(r['length'])}"
     ax.text(
         r["Separability"], r["F_stat"], r["IG"],
         text, fontsize=7, alpha=0.85

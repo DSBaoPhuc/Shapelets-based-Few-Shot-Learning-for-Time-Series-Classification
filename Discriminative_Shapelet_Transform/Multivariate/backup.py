@@ -32,10 +32,24 @@ def load_ts_file(file_path):
 
 
 def load_data_multi():
-    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts"
+    # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
+    # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
+    # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
+    # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
+    # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
+    # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
+    # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
+    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
+    # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
+    # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
+    # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
+    # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
+    file_path = "../../data/PenDigits/PenDigits_TRAIN.ts" # PenDigits
+        
+    
     X, y = load_ts_file(file_path)
 
-    print(f"Loaded dataset: {X.shape[0]} samples, {X.shape[1]} dims, {X.shape[2]} steps.")
+    print(f"Loaded dataset: {X.shape[0]} samples, {X.shape[1]} dims, length {X.shape[2]}.") 
     print(f"Unique labels: {np.unique(y)}")
 
     # Normalize each dimension independently
@@ -77,7 +91,6 @@ def z_norm_fast(ts):
     if std < 1e-8:
         return np.zeros(ts32.shape, dtype=np.float32)
     return ((ts32 - mean) / std).astype(np.float32)
-
 
 @njit(fastmath=True)
 def subdist_fast(x, y):
@@ -181,16 +194,13 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
     return df
 
 
-# -----------------------------
-# Save Top-K Balanced
-# -----------------------------
-def save_topk_balanced(shapelets, df, top_k, csv_path, num_classes=4):
-
-    per_class = top_k // num_classes
+def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
     dfs = []
 
     for c in range(num_classes):
-        df_c = df[df['true_class'] == c].sort_values(by="Composite_Score", ascending=False).head(per_class)
+        df_c = df[df['true_class'] == c]\
+                  .sort_values(by="Composite_Score", ascending=False)\
+                  .head(per_class)
         dfs.append(df_c)
 
     df_balanced = pd.concat(dfs).sort_values(by="Composite_Score", ascending=False)
@@ -203,7 +213,7 @@ def save_topk_balanced(shapelets, df, top_k, csv_path, num_classes=4):
     df_balanced["Shapelet_Values"] = shapelet_values
     df_balanced.to_csv(csv_path, index=False)
 
-    print(f"Balanced Top-{top_k} saved → {csv_path}")
+    print(f"Saved {per_class} shapelets per class → total {len(df_balanced)} → {csv_path}")
     return df_balanced
 
 
@@ -225,30 +235,32 @@ def plot_shapelet_on_series(shapelet, X, series_id, start_pos, label, idx):
     plt.title(f"Shapelet #{idx} | class={label} | start={start_pos} | L={L}")
     plt.show()
 
-
 # =======================================
 # MAIN PIPELINE
 # =======================================
 if __name__ == "__main__":
 
     X, y = load_data_multi()
+    _, _, T = X.shape  # sequence length
 
-    L_list = [20, 30, 40]
-    num_per_length = 20
-    top_k = 12  # Must be divisible by number of classes (4)
+    # ---------------------------------------
+    # AUTO SHAPELET LENGTH RANGE
+    # ---------------------------------------
+    # L_min = int(0.5 * T)  # 10% length of T
+    # L_max = int(1 * T)  # 50% length of T
+    L_min = L_max = 4
+    L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
 
+    L_list = list(range(L_min, L_max + 1, L_step))
+    print(f"\n Auto Generated Shapelet Lengths: {L_list}\n")
+
+    num_per_length = 10
+    
     shapelets = generate_multivariate_shapelets(X, y, L_list, num_per_length)
 
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
-    df_topk = save_topk_balanced(shapelets, df_scores, top_k, "top_shapelets_balanced.csv")
-
-    print("Visualizing top shapelets...")
-    for idx, row in df_topk.iterrows():
-        sid = row["id"]
-        shapelet, series_id, start, label = (shapelets[sid][0],
-                                             shapelets[sid][1],
-                                             shapelets[sid][2],
-                                             shapelets[sid][3])
-
-        plot_shapelet_on_series(shapelet, X, series_id, start, label, idx)
+    df_topk = save_topk_balanced(
+        shapelets, df_scores, "Shapelet_extract/top_shapelets_PD.csv",
+        num_classes=len(np.unique(y)), per_class=5
+    )
