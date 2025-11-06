@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 # === Load CSV shapelet top-k ===
-csv_path = "top_shapelets_balanced_SWJ.csv"
+csv_path = "Shapelet_extract/top_shapelets_SCP1.csv"
 df = pd.read_csv(csv_path)
 
 # === Check required columns ===
