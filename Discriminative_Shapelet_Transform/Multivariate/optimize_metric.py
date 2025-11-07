@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from numba import njit, prange
 from scipy.stats import entropy
-
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from itertools import product
 import os
-
 
 # -----------------------------
 # Load dataset from .ts file
@@ -32,7 +33,7 @@ def load_ts_file(file_path):
 
 
 def load_data_multi():
-    # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
+    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
     # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
     # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
@@ -41,7 +42,7 @@ def load_data_multi():
     # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
     # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
-    file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
+    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
     # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
     # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
@@ -78,7 +79,6 @@ def generate_multivariate_shapelets(X, y, L_list, num_per_length):
                 sl = X[i, :, start:start + L]
                 shapelets.append((sl, i, start, class_label))
     return shapelets
-
 
 def euclidean_dist(S, T):
     return np.linalg.norm(S - T)
@@ -190,7 +190,7 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
         confidence = sorted_means[1] - sorted_means[0]
 
         # Composite Score upgraded with IG
-        comp = 20*f_stat + 30*sep + 50 * ig 
+        comp = 0.2*f_stat + 0.3*sep + 50 * ig 
 
         results.append((idx, series_id, start_pos, L,
                         true_class, predicted_class,
@@ -204,6 +204,101 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
 
     return df
 
+# =========================
+# CHUẨN HÓA METRICS
+# =========================
+def zscore_series(a):
+    mu = a.mean()
+    sigma = a.std()
+    if sigma < 1e-12:
+        return np.zeros_like(a)
+    return (a - mu) / sigma
+
+
+def normalize_metrics(df):
+    df = df.copy()
+    df["F_norm"] = zscore_series(df["F_stat"])
+    df["Separability_norm"] = zscore_series(df["Separability"])
+    df["IG_norm"] = zscore_series(df["IG"])
+    return df
+
+
+# =========================
+# COMPOSITE SCORE w-F, w-sep, w-IG
+# =========================
+def compute_composite(df, w_F, w_sep, w_IG):
+    return w_F * df["F_norm"] + w_sep * df["Separability_norm"] + w_IG * df["IG_norm"]
+
+
+# =========================
+# Shapelet Transform + SVM
+# =========================
+def shapelet_transform(shapelets, df_top, X):
+    transform = np.zeros((X.shape[0], len(df_top)), dtype=np.float32)
+
+    for i, sid in enumerate(df_top["id"].values):
+        shapelet, _, _, _ = shapelets[sid]
+        distances = compute_multivariate_distances(shapelet, X)
+        transform[:, i] = distances
+
+    return transform
+
+
+# =========================
+# GRID-SEARCH tối ưu trọng số
+# =========================
+def grid_search_weights(shapelets, df_norm, X, y, top_k=20,
+                        weight_values=[0.1, 0.3, 0.5, 0.7, 1.0]):
+    best_acc = -1
+    best_weights = None
+    best_df_top = None
+
+    for w_F, w_sep, w_IG in product(weight_values, repeat=3):
+        df = df_norm.copy()
+        df["Composite_Score"] = compute_composite(df, w_F, w_sep, w_IG)
+        df = df.sort_values(by="Composite_Score", ascending=False)
+
+        df_top = df.head(top_k)
+        X_trans = shapelet_transform(shapelets, df_top, X)
+
+        clf = SVC(kernel="rbf")
+        clf.fit(X_trans, y)
+        y_pred = clf.predict(X_trans)
+        acc = accuracy_score(y, y_pred)
+
+        if acc > best_acc:
+            best_acc = acc
+            best_weights = (w_F, w_sep, w_IG)
+            best_df_top = df_top
+
+        print(f"Try w=({w_F},{w_sep},{w_IG}) → acc={acc:.4f}")
+
+    print("\nBest weights:", best_weights, "→ accuracy:", best_acc)
+    return best_df_top, best_weights, best_acc
+
+def select_balanced_shapelets(df, y, top_k=20):
+    unique_classes = np.unique(y)
+    num_classes = len(unique_classes)
+
+    # Mỗi class lấy số shapelet gần bằng nhau
+    k_per_class = top_k // num_classes
+    remainder = top_k % num_classes
+
+    selected_rows = []
+
+    # Lấy balance theo true_class
+    for c in unique_classes:
+        df_c = df[df["true_class"] == c].sort_values("Composite_Score", ascending=False)
+
+        k = k_per_class + (1 if remainder > 0 else 0)
+        remainder -= 1
+
+        selected_rows.append(df_c.head(k))
+
+    # Ghép lại và giới hạn đúng top_k shapelets
+    df_balanced = pd.concat(selected_rows).sort_values("Composite_Score", ascending=False).head(top_k)
+    df_balanced.reset_index(drop=True, inplace=True)
+    return df_balanced
 
 def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
     dfs = []
@@ -227,52 +322,41 @@ def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
     print(f"Saved {per_class} shapelets per class → total {len(df_balanced)} → {csv_path}")
     return df_balanced
 
-
-# -----------------------------
-# Visualization
-# -----------------------------
-def plot_shapelet_on_series(shapelet, X, series_id, start_pos, label, idx):
-    dims, L = shapelet.shape
-    series = X[series_id]
-
-    plt.figure(figsize=(12, 5))
-
-    for d in range(dims):
-        plt.plot(series[d], alpha=0.25)
-
-    for d in range(dims):
-        plt.plot(range(start_pos, start_pos + L), shapelet[d], linewidth=2)
-
-    plt.title(f"Shapelet #{idx} | class={label} | start={start_pos} | L={L}")
-    plt.show()
-
-# =======================================
+# ======================================
 # MAIN PIPELINE
-# =======================================
+# ======================================
 if __name__ == "__main__":
 
     X, y = load_data_multi()
     _, _, T = X.shape  # sequence length
 
-    # ---------------------------------------
-    # AUTO SHAPELET LENGTH RANGE
-    # ---------------------------------------
-    L_min = int(0.1 * T)  # 10% length of T
-    L_max = int(0.5 * T)  # 50% length of T
-    L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
-
+    # Auto shapelet lengths
+    L_min = int(0.1 * T)
+    L_max = int(0.5 * T)
+    L_step = max(5, int(0.05 * T))
     L_list = list(range(L_min, L_max + 1, L_step))
-    print(f"\n Auto Generated Shapelet Lengths: {L_list}\n")
 
     num_per_length = 10
-    
-    shapelets = generate_multivariate_shapelets(X, y, L_list, num_per_length)
 
+    shapelets = generate_multivariate_shapelets(X, y, L_list, num_per_length)
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
-    df_topk = save_topk_balanced(
-        # shapelets, df_scores, "Shapelet_extract/top_shapelets_AF_test.csv",
-        # num_classes=len(np.unique(y)), per_class=5
-        shapelets, df_scores, "Shapelet_extract/Shapelet_Test/top_shapelets_AF_test.csv",
-        num_classes=len(np.unique(y)), per_class=5
+    df_norm = normalize_metrics(df_scores)
+
+    # Grid-search tối ưu trọng số
+    df_best, best_weights, best_acc = grid_search_weights(
+        shapelets, df_norm, X, y,
+        top_k=20,
+        weight_values=[0.1, 0.3, 0.5, 0.7, 1.0]
     )
+
+    df_best["Shapelet_Values"] = [
+        shapelets[sid][0].flatten().tolist()
+        for sid in df_best["id"]
+    ]
+
+    best_shapelet = save_topk_balanced(shapelets, df_best, "top_shapelets_BM_opt.csv", num_classes=5, per_class=5)
+    best_shapelet.to_csv("top_shapelets_BM_opt.csv", index=False)
+
+    print("\nSaved optimized top-k shapelets →", "top_shapelets_BM_opt.csv")
+    print("Best Weights:", best_weights, "Accuracy:", best_acc)
