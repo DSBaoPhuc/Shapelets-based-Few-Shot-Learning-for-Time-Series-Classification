@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
+from sklearn.ensemble import RandomForestClassifier
 
 # =============================
 # LOAD + NORMALIZE DATA
@@ -76,16 +77,15 @@ def shapelet_transform(X, shapelets):
 # X_train, y_train, scalers = load_normalized("../../data/StandWalkJump/StandWalkJump_TRAIN.ts") # StandWalkJump
 # X_train, y_train, scalers = load_normalized("../../data/Libras/Libras_TRAIN.ts") # Libras
 # X_train, y_train, scalers = load_normalized("../../data/RacketSports/RacketSports_TRAIN.ts") # RacketSports
-X_train, y_train, scalers = load_normalized("../../data/Cricket/Cricket_TRAIN.ts") # Cricket
+# X_train, y_train, scalers = load_normalized("../../data/Cricket/Cricket_TRAIN.ts") # Cricket
 # X_train, y_train, scalers = load_normalized("../../data/Epilepsy/Epilepsy_TRAIN.ts") # Epilepsy
 # X_train, y_train, scalers = load_normalized("../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts") # ArticularyWordRecognition
 # X_train, y_train, scalers = load_normalized("../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts") # AtrialFibrillation
 # X_train, y_train, scalers = load_normalized("../../data/FingerMovements/FingerMovements_TRAIN.ts") # FingerMovements
 # X_train, y_train, scalers = load_normalized("../../data/Heartbeat/Heartbeat_TRAIN.ts") # Heartbeat
-# X_train, y_train, scalers = load_normalized("../../data/NATOPS/NATOPS_TRAIN.ts") # NATOPS
+X_train, y_train, scalers = load_normalized("../../data/NATOPS/NATOPS_TRAIN.ts") # NATOPS
 # X_train, y_train, scalers = load_normalized("../../data/LSST/LSST_TRAIN.ts") # LSST
 # X_train, y_train, scalers = load_normalized("../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts") # SelfRegulationSCP1
-# X_train, y_train, scalers = load_normalized("../../data/PenDigits/PenDigits_TRAIN.ts") # PenDigits
 
 
 # Load TEST + normalize using TRAIN Scalers
@@ -93,21 +93,20 @@ X_train, y_train, scalers = load_normalized("../../data/Cricket/Cricket_TRAIN.ts
 # X_test, y_test = load_ts_file("../../data/StandWalkJump/StandWalkJump_TEST.ts") # StandWalkJump
 # X_test, y_test = load_ts_file("../../data/Libras/Libras_TEST.ts") # Libras
 # X_test, y_test = load_ts_file("../../data/RacketSports/RacketSports_TEST.ts") # RacketSports
-X_test, y_test = load_ts_file("../../data/Cricket/Cricket_TEST.ts") # Cricket
+# X_test, y_test = load_ts_file("../../data/Cricket/Cricket_TEST.ts") # Cricket
 # X_test, y_test = load_ts_file("../../data/Epilepsy/Epilepsy_TEST.ts") # Epilepsy
 # X_test, y_test = load_ts_file("../../data/ArticularyWordRecognition/ArticularyWordRecognition_TEST.ts") # ArticularyWordRecognition
 # X_test, y_test = load_ts_file("../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts") # AtrialFibrillation
 # X_test, y_test = load_ts_file("../../data/FingerMovements/FingerMovements_TEST.ts") # FingerMovements
 # X_test, y_test = load_ts_file("../../data/Heartbeat/Heartbeat_TEST.ts") # Heartbeat
-# X_test, y_test = load_ts_file("../../data/NATOPS/NATOPS_TEST.ts") # NATOPS
+X_test, y_test = load_ts_file("../../data/NATOPS/NATOPS_TEST.ts") # NATOPS
 # X_test, y_test = load_ts_file("../../data/LSST/LSST_TEST.ts") # LSST
 # X_test, y_test = load_ts_file("../../data/SelfRegulationSCP1/SelfRegulationSCP1_TEST.ts") # SelfRegulationSCP1
-# X_test, y_test = load_ts_file("../../data/PenDigits/PenDigits_TEST.ts") # PenDigits
 
 X_test = normalize_test(X_test, scalers)
 
 # Load shapelets from CSV
-df = pd.read_csv("Shapelet_extract/top_shapelets_CK_93%.csv")
+df = pd.read_csv("Shapelet_extract/top_shapelets_Natops_70%.csv")
 
 # Parse shapelet values
 shapelets = []
@@ -130,16 +129,30 @@ print(" Feature shape TEST :", Xte.shape)
 clf = SVC(kernel="rbf")
 clf.fit(Xtr, y_train)
 
+# Train classifier (Random Forest)
+rf = RandomForestClassifier(
+    n_estimators=300,
+    max_depth=None,
+    random_state=42,
+    n_jobs=-1
+)
+rf.fit(Xtr, y_train)
+
 # Predict TEST
 y_pred = clf.predict(Xte)
+y_pred_rf = rf.predict(Xte)
 
 # Evaluate
 acc = accuracy_score(y_test, y_pred)
 print("\n TEST Accuracy:", round(acc*100, 4), "%")
 print("\n Classification Report:\n", classification_report(y_test, y_pred))
 
-# Save model
-model_path = "save_model/svm_shapelet_model_CK_93%.joblib"
-joblib.dump(clf, model_path)
+acc_rf = accuracy_score(y_test, y_pred_rf)
+print("\n TEST Accuracy (Random Forest):", round(acc_rf*100, 4), "%")
+print("\n Classification Report (Random Forest):\n", classification_report(y_test, y_pred_rf))
 
-print(f"\n Model saved to: {model_path}")
+# Save model
+# model_path = "save_model/svm_shapelet_model_FingerMovement_58%.joblib"
+# joblib.dump(clf, model_path)
+
+# print(f"\n Model saved to: {model_path}")
