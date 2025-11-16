@@ -53,41 +53,48 @@ def pad_shapelets(X, max_len=None):
     return np.stack(padded, axis=0), max_len  # shape: [B, n_dims, T]
 
 # -----------------------------
-# Simple augmentations
+# Simple augmentations - FIXED
 # -----------------------------
 def augment_jitter(x, sigma=0.02):
+    """Add random noise to time series"""
     return x + np.random.normal(0, sigma, size=x.shape)
 
 def augment_scaling(x, sigma=0.1):
+    """Scale time series by random factor"""
     factor = np.random.normal(1.0, sigma)
     return x * factor
 
 def random_crop(x, keep_ratio=0.9):
-    L = len(x)
-    keep = max(1, int(L * keep_ratio))
-    if keep == L:
-        return x
-    start = np.random.randint(0, L - keep + 1)
-    cropped = x[start:start+keep]
-    return np.pad(cropped, (0, L - keep))
+    """Randomly crop and pad back to original length - FIXED for 2D input"""
+    if x.ndim == 1:
+        # 1D case
+        L = len(x)
+        keep = max(1, int(L * keep_ratio))
+        if keep == L:
+            return x
+        start = np.random.randint(0, L - keep + 1)
+        cropped = x[start:start+keep]
+        return np.pad(cropped, (0, L - keep), mode='edge')
+    else:
+        # 2D case: (n_dims, L)
+        n_dims, L = x.shape
+        keep = max(1, int(L * keep_ratio))
+        if keep == L:
+            return x
+        start = np.random.randint(0, L - keep + 1)
+        cropped = x[:, start:start+keep]
+        # Pad along time dimension
+        pad_width = ((0, 0), (0, L - keep))
+        return np.pad(cropped, pad_width, mode='edge')
 
 def maybe_augment_array(arr, p=0.5):
+    """Apply random augmentation to each sample in batch - FIXED"""
     out = arr.copy()
-    n_dims, T = out.shape[1], out.shape[2]  # (B, n_dims, T)
+    # arr shape: [batch_size, n_dims, time_length]
     for i in range(out.shape[0]):
         if random.random() < p:
             op = random.choice([augment_jitter, augment_scaling, random_crop])
-            new_shapelet = np.zeros_like(out[i])
-            for d in range(n_dims):
-                tmp = op(out[i,d])
-                # đảm bảo padding/truncation để giữ đúng T
-                L = len(tmp)
-                if L < T:
-                    tmp = np.pad(tmp, (0, T-L))
-                elif L > T:
-                    tmp = tmp[:T]
-                new_shapelet[d] = tmp
-            out[i] = new_shapelet
+            out[i] = op(out[i])
     return out
 
 # -----------------------------

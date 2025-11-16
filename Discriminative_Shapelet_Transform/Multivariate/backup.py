@@ -33,6 +33,7 @@ def load_ts_file(file_path):
 
 def load_data_multi():
     # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
+    # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
     # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
     # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
@@ -40,11 +41,11 @@ def load_data_multi():
     # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
     # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
+    file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
     # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
     # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
     # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
-    file_path = "../../data/PenDigits/PenDigits_TRAIN.ts" # PenDigits
         
     
     X, y = load_ts_file(file_path)
@@ -92,14 +93,24 @@ def z_norm_fast(ts):
         return np.zeros(ts32.shape, dtype=np.float32)
     return ((ts32 - mean) / std).astype(np.float32)
 
+
+# @njit(fastmath=True)
+# def subdist_fast(x, y):
+#     s = 0.0
+#     for i in range(x.shape[0]):
+#         diff = x[i] - y[i]
+#         s += diff * diff
+#     return np.sqrt(s)
+
 @njit(fastmath=True)
 def subdist_fast(x, y):
     s = 0.0
-    for i in range(x.shape[0]):
+    m = x.shape[0]
+    for i in range(m):
         diff = x[i] - y[i]
         s += diff * diff
-    return np.sqrt(s)
-
+    # return np.sqrt(s)
+    return np.sqrt(s / m)
 
 @njit(parallel=True, fastmath=True)
 def compute_multivariate_distances(shapelet, X):
@@ -179,7 +190,7 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
         confidence = sorted_means[1] - sorted_means[0]
 
         # Composite Score upgraded with IG
-        comp = f_stat + sep + 50 * ig  # alpha = 50 (tunable weight)
+        comp = 20*f_stat + 30*sep + 50 * ig 
 
         results.append((idx, series_id, start_pos, L,
                         true_class, predicted_class,
@@ -246,9 +257,8 @@ if __name__ == "__main__":
     # ---------------------------------------
     # AUTO SHAPELET LENGTH RANGE
     # ---------------------------------------
-    # L_min = int(0.5 * T)  # 10% length of T
-    # L_max = int(1 * T)  # 50% length of T
-    L_min = L_max = 4
+    L_min = int(0.1 * T)  # 10% length of T
+    L_max = int(0.5 * T)  # 50% length of T
     L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
 
     L_list = list(range(L_min, L_max + 1, L_step))
@@ -261,6 +271,8 @@ if __name__ == "__main__":
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        shapelets, df_scores, "Shapelet_extract/top_shapelets_PD.csv",
+        # shapelets, df_scores, "Shapelet_extract/top_shapelets_AF.csv",
+        # num_classes=len(np.unique(y)), per_class=5
+        shapelets, df_scores, "Shapelet_extract/Shapelet_Test/top_shapelets_AF_test.csv",
         num_classes=len(np.unique(y)), per_class=5
     )

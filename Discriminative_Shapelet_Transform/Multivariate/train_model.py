@@ -73,7 +73,7 @@ def shapelet_transform(X, shapelets):
     return feat
 
 # Load TRAIN (normalize)
-# X_train, y_train, scalers = load_normalized("../../data/BasicMotions/BasicMotions_TRAIN.ts") # BasicMotions
+X_train, y_train, scalers = load_normalized("../../data/BasicMotions/BasicMotions_TRAIN.ts") # BasicMotions
 # X_train, y_train, scalers = load_normalized("../../data/StandWalkJump/StandWalkJump_TRAIN.ts") # StandWalkJump
 # X_train, y_train, scalers = load_normalized("../../data/Libras/Libras_TRAIN.ts") # Libras
 # X_train, y_train, scalers = load_normalized("../../data/RacketSports/RacketSports_TRAIN.ts") # RacketSports
@@ -83,13 +83,13 @@ def shapelet_transform(X, shapelets):
 # X_train, y_train, scalers = load_normalized("../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts") # AtrialFibrillation
 # X_train, y_train, scalers = load_normalized("../../data/FingerMovements/FingerMovements_TRAIN.ts") # FingerMovements
 # X_train, y_train, scalers = load_normalized("../../data/Heartbeat/Heartbeat_TRAIN.ts") # Heartbeat
-X_train, y_train, scalers = load_normalized("../../data/NATOPS/NATOPS_TRAIN.ts") # NATOPS
+# X_train, y_train, scalers = load_normalized("../../data/NATOPS/NATOPS_TRAIN.ts") # NATOPS
 # X_train, y_train, scalers = load_normalized("../../data/LSST/LSST_TRAIN.ts") # LSST
 # X_train, y_train, scalers = load_normalized("../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts") # SelfRegulationSCP1
 
 
 # Load TEST + normalize using TRAIN Scalers
-# X_test, y_test = load_ts_file("../../data/BasicMotions/BasicMotions_TEST.ts") # BasicMotions
+X_test, y_test = load_ts_file("../../data/BasicMotions/BasicMotions_TEST.ts") # BasicMotions
 # X_test, y_test = load_ts_file("../../data/StandWalkJump/StandWalkJump_TEST.ts") # StandWalkJump
 # X_test, y_test = load_ts_file("../../data/Libras/Libras_TEST.ts") # Libras
 # X_test, y_test = load_ts_file("../../data/RacketSports/RacketSports_TEST.ts") # RacketSports
@@ -99,14 +99,14 @@ X_train, y_train, scalers = load_normalized("../../data/NATOPS/NATOPS_TRAIN.ts")
 # X_test, y_test = load_ts_file("../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts") # AtrialFibrillation
 # X_test, y_test = load_ts_file("../../data/FingerMovements/FingerMovements_TEST.ts") # FingerMovements
 # X_test, y_test = load_ts_file("../../data/Heartbeat/Heartbeat_TEST.ts") # Heartbeat
-X_test, y_test = load_ts_file("../../data/NATOPS/NATOPS_TEST.ts") # NATOPS
+# X_test, y_test = load_ts_file("../../data/NATOPS/NATOPS_TEST.ts") # NATOPS
 # X_test, y_test = load_ts_file("../../data/LSST/LSST_TEST.ts") # LSST
 # X_test, y_test = load_ts_file("../../data/SelfRegulationSCP1/SelfRegulationSCP1_TEST.ts") # SelfRegulationSCP1
 
 X_test = normalize_test(X_test, scalers)
 
 # Load shapelets from CSV
-df = pd.read_csv("Shapelet_extract/top_shapelets_Natops_70%.csv")
+df = pd.read_csv("Shapelet_extract/top_shapelets_BMnew1.csv")
 
 # Parse shapelet values
 shapelets = []
