@@ -90,7 +90,8 @@ if __name__ == "__main__":
     X_test = normalize_test(X_test, scalers)
 
     # ---------- Load shapelets from CSV (new format: dim_0, dim_1, ..., Shapelet_Length) ----------
-    csv_path = "Shapelet_extract/top_shapelets_BasicMotions.csv"
+    # csv_path = "Shapelet_extract/top_shapelets_BasicMotions.csv"
+    csv_path = "shapelets_BasicMotions.csv"
     df = pd.read_csv(csv_path)
 
     # Find all dim_* columns sorted by index
