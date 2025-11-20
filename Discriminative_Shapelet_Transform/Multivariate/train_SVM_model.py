@@ -83,14 +83,14 @@ def shapelet_transform(X, shapelets):
 if __name__ == "__main__":
 
     # ---------- Load TRAIN (normalize) ----------
-    X_train, y_train, scalers = load_normalized("../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts") # AtrialFibrillation
+    X_train, y_train, scalers = load_normalized("../../data/BasicMotions/BasicMotions_TRAIN.ts") # BasicMotions
 
     # ---------- Load TEST + normalize ----------
-    X_test, y_test = load_ts_file("../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts")
+    X_test, y_test = load_ts_file("../../data/BasicMotions/BasicMotions_TEST.ts")
     X_test = normalize_test(X_test, scalers)
 
     # ---------- Load shapelets from CSV (new format: dim_0, dim_1, ..., Shapelet_Length) ----------
-    csv_path = "Shapelet_extract/top_shapelets_AF_40%.csv"
+    csv_path = "Shapelet_extract/top_shapelets_BasicMotions.csv"
     df = pd.read_csv(csv_path)
 
     # Find all dim_* columns sorted by index
@@ -177,13 +177,14 @@ if __name__ == "__main__":
     y_pred_rf = rf.predict(Xte)
 
     # ---------- Evaluate ----------
-    acc = accuracy_score(y_test, y_pred)
-    print("\n TEST Accuracy (SVM):", round(acc*100, 4), "%")
+    acc = accuracy_score(y_test, y_pred)    
     print("\n Classification Report (SVM):\n", classification_report(y_test, y_pred))
 
     acc_rf = accuracy_score(y_test, y_pred_rf)
-    print("\n TEST Accuracy (Random Forest):", round(acc_rf*100, 4), "%")
     print("\n Classification Report (Random Forest):\n", classification_report(y_test, y_pred_rf))
+    
+    print("\nTEST Accuracy (SVM):", round(acc*100, 4), "%")
+    print("TEST Accuracy (Random Forest):", round(acc_rf*100, 4), "%")
 
     # ---------- (optional) Save models ----------
     # joblib.dump(clf, "save_model/svm_shapelet_model.joblib")

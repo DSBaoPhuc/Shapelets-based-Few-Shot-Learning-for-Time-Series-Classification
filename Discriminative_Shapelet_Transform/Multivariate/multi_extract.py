@@ -33,20 +33,25 @@ def load_ts_file(file_path):
 
 def load_data_multi():
     # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
-    file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
     # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
     # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
     # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
     # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
-    # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
+    file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
-    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
     # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
     # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
     # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
         
+        
+    #Test files
+    # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
+    # file_path = "../../data/Cricket/Cricket_TEST.ts"
+    # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
+    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
+    
     
     X, y = load_ts_file(file_path)
 
@@ -241,7 +246,6 @@ def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
         if sl.ndim >= 1:
             max_dims = max(max_dims, sl.shape[0])
 
-    # Chuẩn bị cột dim_0 ... dim_{max_dims-1}
     dim_columns = [f"dim_{d}" for d in range(max_dims)]
 
     # Lấy giá trị per-dimension cho từng shapelet
@@ -320,8 +324,6 @@ if __name__ == "__main__":
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        shapelets, df_scores, "Shapelet_extract/top_shapelets_BMtestnew.csv",
+        shapelets, df_scores, "Shapelet_extract/top_shapelets_ArticularyWordRecognition.csv",
         num_classes=len(np.unique(y)), per_class=5
-        # shapelets, df_scores, "Shapelet_extract/Shapelet_Test/top_shapelets_AF_test.csv",
-        # num_classes=len(np.unique(y)), per_class=5
     )

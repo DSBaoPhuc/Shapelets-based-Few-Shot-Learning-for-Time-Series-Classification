@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from numba import njit, prange
 from scipy.stats import entropy
-
+import json
 import os
 
 
@@ -33,20 +33,25 @@ def load_ts_file(file_path):
 
 def load_data_multi():
     # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
-    # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
     # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
     # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
     # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
     # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
-    # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
+    file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
-    file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
     # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
     # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
     # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
         
+        
+    #Test files
+    # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
+    # file_path = "../../data/Cricket/Cricket_TEST.ts"
+    # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
+    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
+    
     
     X, y = load_ts_file(file_path)
 
@@ -92,15 +97,6 @@ def z_norm_fast(ts):
     if std < 1e-8:
         return np.zeros(ts32.shape, dtype=np.float32)
     return ((ts32 - mean) / std).astype(np.float32)
-
-
-# @njit(fastmath=True)
-# def subdist_fast(x, y):
-#     s = 0.0
-#     for i in range(x.shape[0]):
-#         diff = x[i] - y[i]
-#         s += diff * diff
-#     return np.sqrt(s)
 
 @njit(fastmath=True)
 def subdist_fast(x, y):
@@ -190,7 +186,7 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
         confidence = sorted_means[1] - sorted_means[0]
 
         # Composite Score upgraded with IG
-        comp = 20*f_stat + 30*sep + 50 * ig 
+        comp = 20*f_stat + 30*sep + 50*ig 
 
         results.append((idx, series_id, start_pos, L,
                         true_class, predicted_class,
@@ -205,7 +201,33 @@ def evaluate_multivariate_shapelets(shapelets, X, y):
     return df
 
 
+# def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
+#     dfs = []
+
+#     for c in range(num_classes):
+#         df_c = df[df['true_class'] == c]\
+#                   .sort_values(by="Composite_Score", ascending=False)\
+#                   .head(per_class)
+#         dfs.append(df_c)
+
+#     df_balanced = pd.concat(dfs).sort_values(by="Composite_Score", ascending=False)
+
+#     shapelet_values = []
+#     for sid in df_balanced['id']:
+#         sl, _, _, _ = shapelets[sid]
+#         shapelet_values.append(sl.flatten().tolist())
+
+#     df_balanced["Shapelet_Values"] = shapelet_values
+#     df_balanced.to_csv(csv_path, index=False)
+
+#     print(f"Saved {per_class} shapelets per class → total {len(df_balanced)} → {csv_path}")
+#     return df_balanced
+
 def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
+    """
+    Lưu top-k shapelets theo từng lớp, mỗi dimension lưu vào cột riêng (dim_0, dim_1, ...).
+    Mỗi ô chứa chuỗi JSON của list các giá trị cho dimension đó.
+    """
     dfs = []
 
     for c in range(num_classes):
@@ -214,14 +236,45 @@ def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
                   .head(per_class)
         dfs.append(df_c)
 
-    df_balanced = pd.concat(dfs).sort_values(by="Composite_Score", ascending=False)
+    df_balanced = pd.concat(dfs).sort_values(by="Composite_Score", ascending=False).reset_index(drop=True)
 
-    shapelet_values = []
-    for sid in df_balanced['id']:
+    # Tìm số dimension lớn nhất trong các shapelet được chọn (để tạo đủ cột dim_i)
+    selected_ids = df_balanced['id'].tolist()
+    max_dims = 0
+    for sid in selected_ids:
         sl, _, _, _ = shapelets[sid]
-        shapelet_values.append(sl.flatten().tolist())
+        if sl.ndim >= 1:
+            max_dims = max(max_dims, sl.shape[0])
 
-    df_balanced["Shapelet_Values"] = shapelet_values
+    dim_columns = [f"dim_{d}" for d in range(max_dims)]
+
+    # Lấy giá trị per-dimension cho từng shapelet
+    rows_dim_values = {col: [] for col in dim_columns}
+    shapelet_lengths = []  # length L của từng shapelet
+    for sid in selected_ids:
+        sl, _, _, _ = shapelets[sid]  # sl shape: (n_dims, L)
+        n_dims = sl.shape[0]
+        L = sl.shape[1]
+        shapelet_lengths.append(L)
+
+        for d in range(max_dims):
+            if d < n_dims:
+                # lưu dưới dạng JSON string để ghi an toàn vào CSV
+                rows_dim_values[f"dim_{d}"].append(json.dumps(sl[d].tolist()))
+            else:
+                # Nếu shapelet không có dimension này -> lưu empty list
+                rows_dim_values[f"dim_{d}"].append(json.dumps([]))
+
+    # Thêm các cột mới vào df_balanced
+    for col in dim_columns:
+        df_balanced[col] = rows_dim_values[col]
+    df_balanced['Shapelet_Length'] = shapelet_lengths
+
+    # Nếu bạn vẫn muốn thêm 1 cột chứa toàn bộ shapelet (như trước) nhưng đa chiều:
+    # df_balanced["Shapelet_Values"] = [json.dumps(shapelets[sid][0].tolist()) for sid in selected_ids]
+
+    # Lưu CSV
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     df_balanced.to_csv(csv_path, index=False)
 
     print(f"Saved {per_class} shapelets per class → total {len(df_balanced)} → {csv_path}")
@@ -258,7 +311,7 @@ if __name__ == "__main__":
     # AUTO SHAPELET LENGTH RANGE
     # ---------------------------------------
     L_min = int(0.1 * T)  # 10% length of T
-    L_max = int(0.5 * T)  # 50% length of T
+    L_max = int(0.75 * T)  # 75% length of T
     L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
 
     L_list = list(range(L_min, L_max + 1, L_step))
@@ -271,8 +324,6 @@ if __name__ == "__main__":
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        # shapelets, df_scores, "Shapelet_extract/top_shapelets_AF.csv",
-        # num_classes=len(np.unique(y)), per_class=5
-        shapelets, df_scores, "Shapelet_extract/Shapelet_Test/top_shapelets_AF_test.csv",
+        shapelets, df_scores, "Shapelet_extract/top_shapelets_ArticularyWordRecognition.csv",
         num_classes=len(np.unique(y)), per_class=5
     )

@@ -308,8 +308,8 @@ def test_model(model, X_train, y_train, X_test, y_test):
 # Run full training & testing
 # -----------------------------
 if __name__ == "__main__":
-    train_path = "Shapelet_extract/top_shapelets_BMnew.csv"
-    test_path = "Shapelet_extract/Shapelet_Test/top_shapelets_BMtestnew.csv"
+    train_path = "Shapelet_extract/top_shapelets_Epilepsy.csv"
+    test_path = "Shapelet_extract/Shapelet_Test/top_shapelets_Epilepsy_test.csv"
 
     X_train, y_train = load_shapelet_csv_multidim(train_path)
     X_test, y_test = load_shapelet_csv_multidim(test_path)

@@ -1,62 +1,9 @@
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from sklearn.preprocessing import LabelEncoder
-
-# def load_ts_file(file_path):
-#     with open(file_path, "r") as f:
-#         lines = [line.strip() for line in f.readlines() if line.strip()]
-#     data_start = lines.index("@data") + 1
-#     X, y = [], []
-#     for line in lines[data_start:]:
-#         parts = line.split(":")
-#         dims = [np.array(list(map(float, dim.split(","))), dtype=np.float32)
-#                 for dim in parts[:-1]]
-#         label = parts[-1].strip()
-#         X.append(dims)
-#         y.append(label)
-#     X = np.array(X, dtype=np.float32)
-#     y = LabelEncoder().fit_transform(y)
-#     return X, y
-
-# file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts"
-# X, y = load_ts_file(file_path)
-
-# print("X shape:", X.shape)  # (n_samples, n_dims, series_length)
-# print("y:", y[:5])
-
-# sample_idx = 0  # sample đầu tiên
-# dim_to_plot = [0,1,2,3]  # 3 chiều đầu
-# series = X[sample_idx, dim_to_plot, :]
-
-# start = 20  # bắt đầu từ timestep 200
-# L = 30       # chiều dài shapelet
-# shapelet = series[:, start:start+L]  # shapelet 2D (3 x 50)
-# print("Shapelet shape:", shapelet.shape)
-
-
-# plt.figure(figsize=(12,6))
-
-# # Vẽ toàn bộ chuỗi gốc
-# for i, dim in enumerate(dim_to_plot):
-#     plt.plot(series[i], label=f"dim {dim}")
-
-# # Highlight shapelet
-# for i, dim in enumerate(dim_to_plot):
-#     plt.plot(range(start, start+L), shapelet[i], linewidth=3)
-
-# plt.title(f"Sample {sample_idx} - Multivariate shapelet (highlighted)")
-# plt.xlabel("Timestep")
-# plt.ylabel("Value")
-# plt.legend()
-# plt.show()
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-# --- Load BasicMotions ---
+# --- Load function ---
 def load_ts_file(file_path):
     with open(file_path, "r") as f:
         lines = [line.strip() for line in f.readlines() if line.strip()]
