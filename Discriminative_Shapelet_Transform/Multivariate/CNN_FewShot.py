@@ -10,6 +10,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from copy import deepcopy
 import random
+import matplotlib.pyplot as plt
 
 # -----------------------------
 # Utility: load / pad
@@ -124,7 +125,7 @@ class ResidualBlock(nn.Module):
         return self.act(out + x)
 
 class CNNEncoder(nn.Module):
-    def __init__(self, in_channels=1, emb_dim=128, hidden_channels=64, dropout=0.2):
+    def __init__(self, in_channels=1, emb_dim=64, hidden_channels=32, dropout=0.2):
         super().__init__()
         self.net = nn.Sequential(
             ConvBlock(in_channels, hidden_channels, kernel_size=7, padding=3, pool=True),
@@ -259,7 +260,9 @@ def proto_train_step(model, opt, X, y, device, N=2, K=2, Q=3, episodes_per_batch
     acc = (preds == targets).float().mean().item()
     return loss.item(), acc
 
-def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4, emb_dim=128, lr=3e-4, weight_decay=1e-4, device=None):
+
+def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4,
+                emb_dim=128, lr=3e-4, weight_decay=1e-4, device=None):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     in_channels = X.shape[1]
@@ -270,9 +273,15 @@ def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4, emb_dim
     best_model = deepcopy(model.state_dict())
     best_acc = -1.0
 
+    history = {"loss": [], "acc": []}
+
     for ep in range(episodes):
         loss, acc = proto_train_step(model, opt, X, y, device, N, K, Q, episodes_per_batch)
         scheduler.step()
+
+        history["loss"].append(loss)
+        history["acc"].append(acc)
+
         if (ep+1) % 10 == 0 or ep == 0:
             print(f"Episode {ep+1:04d}/{episodes}: Loss={loss:.4f}, Acc={acc:.4f}")
         if acc > best_acc:
@@ -280,7 +289,7 @@ def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4, emb_dim
             best_model = deepcopy(model.state_dict())
 
     model.load_state_dict(best_model)
-    return model
+    return model, history
 
 # -----------------------------
 # Test k-NN on embeddings
@@ -308,8 +317,12 @@ def test_model(model, X_train, y_train, X_test, y_test):
 # Run full training & testing
 # -----------------------------
 if __name__ == "__main__":
-    train_path = "Shapelet_extract/top_shapelets_Epilepsy.csv"
-    test_path = "Shapelet_extract/Shapelet_Test/top_shapelets_Epilepsy_test.csv"
+    # train_path = "Shapelet_extract/shapelets_Epilepsy.csv"
+    # test_path = "Shapelet_extract/Shapelet_Test/shapelets_Epilepsy_test.csv"
+    
+    train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary_95_train.csv"
+    # test_path = "shapelets_UWaveGestureLibrary.csv"
+    test_path = "Shapelet_extract/Shapelet_Test/shapelets_UWaveGestureLibrary_95_test.csv"
 
     X_train, y_train = load_shapelet_csv_multidim(train_path)
     X_test, y_test = load_shapelet_csv_multidim(test_path)
@@ -320,8 +333,43 @@ if __name__ == "__main__":
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
 
-    # Train
-    model = train_model(X_train, y_train, episodes=250, N=2, K=2, Q=3, episodes_per_batch=4, emb_dim=128)
+    # Training
+    model, history = train_model(
+        X_train, y_train,
+        episodes=2000,
+        N=2, K=2, Q=3,
+        # N=4, K=4, Q=6,
+        episodes_per_batch=2,
+        emb_dim=512,
+        lr=3e-4,
+        weight_decay=1e-4,
+        device=None
+    )
+
+    # Plot
+    losses = history["loss"]
+    accs = history["acc"]
+    epochs = np.arange(1, len(losses) + 1)
+
+    plt.figure(figsize=(10,4))
+    # subplot 1: loss
+    plt.subplot(1,2,1)
+    plt.plot(epochs, losses)
+    plt.xlabel("Episode")
+    plt.ylabel("Loss")
+    plt.title("Training Loss")
+    plt.grid(True)
+
+    # subplot 2: accuracy
+    plt.subplot(1,2,2)
+    plt.plot(epochs, accs)
+    plt.xlabel("Episode")
+    plt.ylabel("Accuracy")
+    plt.title("Training Accuracy")
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
 
     # Test
     test_model(model, X_train, y_train, X_test, y_test)

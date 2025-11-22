@@ -83,15 +83,15 @@ def shapelet_transform(X, shapelets):
 if __name__ == "__main__":
 
     # ---------- Load TRAIN (normalize) ----------
-    X_train, y_train, scalers = load_normalized("../../data/BasicMotions/BasicMotions_TRAIN.ts") # BasicMotions
+    X_train, y_train, scalers = load_normalized("../../data/Car/Car_TRAIN.ts") # Car
 
     # ---------- Load TEST + normalize ----------
-    X_test, y_test = load_ts_file("../../data/BasicMotions/BasicMotions_TEST.ts")
+    X_test, y_test = load_ts_file("../../data/Car/Car_TEST.ts")
     X_test = normalize_test(X_test, scalers)
 
     # ---------- Load shapelets from CSV (new format: dim_0, dim_1, ..., Shapelet_Length) ----------
     # csv_path = "Shapelet_extract/top_shapelets_BasicMotions.csv"
-    csv_path = "shapelets_BasicMotions.csv"
+    csv_path = "shapelets_Coffee.csv"
     df = pd.read_csv(csv_path)
 
     # Find all dim_* columns sorted by index

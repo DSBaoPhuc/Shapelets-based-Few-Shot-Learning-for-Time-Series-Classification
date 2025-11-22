@@ -29,25 +29,27 @@ def load_ts_file(file_path):
 
 
 def load_data_multi():
-    file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
-    # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
-    # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
-    # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
+    # file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
+    # file_path = "../../data/Handwriting/Handwriting_TRAIN.ts" # Handwriting
+    # file_path = "../../data/JapaneseVowels/JapaneseVowels_eq_TRAIN.ts" # JapaneseVowels
+    # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TRAIN.ts" # UWaveGestureLibrary   
+    # file_path = "../../data/PEMS-SF/PEMS-SF_TRAIN.ts" # PEMS-SF 
+    # file_path = "../../data/EthanolConcentration/EthanolConcentration_TRAIN.ts" # EthanolConcentration
+    # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TRAIN.ts" # SCP2
+    # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat        
+    # file_path = "../../data/Car/Car_TRAIN.ts" # Car
     # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
-    # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
-    # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
-    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
-    # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
-    # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
-    # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
-    # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
-        
+    file_path = "../../data/Coffee/Coffee_TRAIN.ts" # Coffee
         
     #Test files
+    # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TEST.ts" # UWaveGestureLibrary
+    # file_path = "../../data/JapaneseVowels/JapaneseVowels_eq_TEST.ts" # JapaneseVowels
+    # file_path = "../../data/Handwriting/Handwriting_TEST.ts"
     # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/Cricket/Cricket_TEST.ts"
     # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
+    # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TEST.ts" # SCP2
     
     
     X, y = load_ts_file(file_path)
@@ -90,20 +92,27 @@ if __name__ == "__main__":
     X, y = load_data_multi()
     _, _, T = X.shape  # sequence length
 
-    L_min = int(0.1 * T)  # 10% length of T
-    L_max = int(0.75 * T)  # 75% length of T
-    L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
+    L_min = int(0.2 * T)  # 20% length of T
+    L_max = int(0.7 * T)  # 70% length of T
+    L_step = max(5, int(0.1 * T))  # step size 10% of T or 5 if T is small
 
     L_list = list(range(L_min, L_max + 1, L_step))
     print(f"\n Auto Generated Shapelet Lengths: {L_list}\n")
 
-    num_per_length = 10
+    num_per_length = 40
     
     shapelets = generate_multivariate_shapelets(X, y, L_list, num_per_length)
 
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        shapelets, df_scores, "shapelets_BasicMotions.csv",
-        num_classes=len(np.unique(y)), per_class=5
+        shapelets, df_scores, "shapelets_Coffee.csv",
+        num_classes=len(np.unique(y)), per_class=10
+        
+        # # 1 dim
+        # shapelets, df_scores, "shapelets_Car.csv",
+        # num_classes=len(np.unique(y)), per_class=10
+        
+        # shapelets, df_scores, "shapelets_UWaveGestureLibrary_test.csv",
+        # num_classes=len(np.unique(y)), per_class=40
     )
