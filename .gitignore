@@ -3,3 +3,5 @@ __pycache__
 data
 Shapelet_extract
 Univariate
+Result
+save_model
