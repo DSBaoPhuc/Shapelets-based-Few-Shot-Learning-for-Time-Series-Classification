@@ -72,7 +72,7 @@ def random_crop(x, keep_ratio=0.9):
     cropped = x[start:start+keep]
     return np.pad(cropped, (0, L - keep))
 
-def maybe_augment_array(arr, p=0.5):
+def augment_array(arr, p=0.5):
     out = arr.copy()
     n_dims, T = out.shape[1], out.shape[2]  # (B, n_dims, T)
     for i in range(out.shape[0]):
@@ -125,7 +125,7 @@ class ResidualBlock(nn.Module):
         return self.act(out + x)
 
 class CNNEncoder(nn.Module):
-    def __init__(self, in_channels=1, emb_dim=64, hidden_channels=32, dropout=0.2):
+    def __init__(self, in_channels=1, emb_dim=64, hidden_channels=32, dropout=0.3):
         super().__init__()
         self.net = nn.Sequential(
             ConvBlock(in_channels, hidden_channels, kernel_size=7, padding=3, pool=True),
@@ -213,8 +213,8 @@ def proto_train_step(model, opt, X, y, device, N=2, K=2, Q=3, episodes_per_batch
     model.train()
     sup_x, sup_y, qry_x, qry_y = create_episode_batch(X, y, N, K, Q, batch_size=episodes_per_batch)
 
-    sup_x = maybe_augment_array(sup_x.numpy(), p=0.5)
-    qry_x = maybe_augment_array(qry_x.numpy(), p=0.2)
+    sup_x = augment_array(sup_x.numpy(), p=0.5)
+    qry_x = augment_array(qry_x.numpy(), p=0.2)
 
     sup_x = torch.tensor(sup_x, dtype=torch.float32).to(device)
     qry_x = torch.tensor(qry_x, dtype=torch.float32).to(device)
@@ -317,12 +317,12 @@ def test_model(model, X_train, y_train, X_test, y_test):
 # Run full training & testing
 # -----------------------------
 if __name__ == "__main__":
-    # train_path = "Shapelet_extract/shapelets_Epilepsy.csv"
-    # test_path = "Shapelet_extract/Shapelet_Test/shapelets_Epilepsy_test.csv"
+    train_path = "Shapelet_extract/shapelets_JapaneseVowels.csv"
+    test_path = "Shapelet_extract/Shapelet_Test/shapelets_JapaneseVowels_test.csv"
     
-    train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary_95_train.csv"
-    # test_path = "shapelets_UWaveGestureLibrary.csv"
-    test_path = "Shapelet_extract/Shapelet_Test/shapelets_UWaveGestureLibrary_95_test.csv"
+    # train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary_95_train.csv"
+    # # test_path = "shapelets_UWaveGestureLibrary.csv"
+    # test_path = "Shapelet_extract/Shapelet_Test/shapelets_UWaveGestureLibrary_95_test.csv"
 
     X_train, y_train = load_shapelet_csv_multidim(train_path)
     X_test, y_test = load_shapelet_csv_multidim(test_path)
@@ -337,10 +337,11 @@ if __name__ == "__main__":
     model, history = train_model(
         X_train, y_train,
         episodes=2000,
-        N=2, K=2, Q=3,
-        # N=4, K=4, Q=6,
-        episodes_per_batch=2,
-        emb_dim=512,
+        N=5, K=1, Q=4,
+        # N=3, K=3, Q=3,
+        
+        episodes_per_batch=8,
+        emb_dim=256,
         lr=3e-4,
         weight_decay=1e-4,
         device=None

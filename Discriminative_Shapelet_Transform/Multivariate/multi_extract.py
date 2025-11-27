@@ -34,12 +34,12 @@ def load_data_multi():
     # file_path = "../../data/JapaneseVowels/JapaneseVowels_eq_TRAIN.ts" # JapaneseVowels
     # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TRAIN.ts" # UWaveGestureLibrary   
     # file_path = "../../data/PEMS-SF/PEMS-SF_TRAIN.ts" # PEMS-SF 
-    # file_path = "../../data/EthanolConcentration/EthanolConcentration_TRAIN.ts" # EthanolConcentration
+    file_path = "../../data/EthanolConcentration/EthanolConcentration_TRAIN.ts" # EthanolConcentration
     # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TRAIN.ts" # SCP2
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat        
     # file_path = "../../data/Car/Car_TRAIN.ts" # Car
     # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
-    file_path = "../../data/Coffee/Coffee_TRAIN.ts" # Coffee
+    # file_path = "../../data/Coffee/Coffee_TRAIN.ts" # Coffee
         
     #Test files
     # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TEST.ts" # UWaveGestureLibrary
@@ -50,6 +50,7 @@ def load_data_multi():
     # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
     # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TEST.ts" # SCP2
+    # file_path = "../../data/EthanolConcentration/EthanolConcentration_TEST.ts" # EthanolConcentration
     
     
     X, y = load_ts_file(file_path)
@@ -106,13 +107,13 @@ if __name__ == "__main__":
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        shapelets, df_scores, "shapelets_Coffee.csv",
+        shapelets, df_scores, "shapelets_EthanolConcentration.csv",
         num_classes=len(np.unique(y)), per_class=10
         
         # # 1 dim
         # shapelets, df_scores, "shapelets_Car.csv",
         # num_classes=len(np.unique(y)), per_class=10
         
-        # shapelets, df_scores, "shapelets_UWaveGestureLibrary_test.csv",
+        # shapelets, df_scores, "shapelets_EthanolConcentration_test.csv",
         # num_classes=len(np.unique(y)), per_class=40
     )
