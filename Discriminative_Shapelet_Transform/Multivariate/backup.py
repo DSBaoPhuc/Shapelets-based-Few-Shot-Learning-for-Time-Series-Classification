@@ -33,25 +33,6 @@ def load_ts_file(file_path):
 
 def load_data_multi():
     file_path = "../../data/BasicMotions/BasicMotions_TRAIN.ts" # BasicMotions
-    # file_path = "../../data/StandWalkJump/StandWalkJump_TRAIN.ts" # StandWalkJump
-    # file_path = "../../data/Libras/Libras_TRAIN.ts" # Libras
-    # file_path = "../../data/RacketSports/RacketSports_TRAIN.ts" # RacketSports
-    # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
-    # file_path = "../../data/Epilepsy/Epilepsy_TRAIN.ts" # Epilepsy
-    # file_path = "../../data/ArticularyWordRecognition/ArticularyWordRecognition_TRAIN.ts" # ArticularyWordRecognition
-    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TRAIN.ts" # AtrialFibrillation
-    # file_path = "../../data/FingerMovements/FingerMovements_TRAIN.ts" # FingerMovements
-    # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat
-    # file_path = "../../data/NATOPS/NATOPS_TRAIN.ts" # NATOPS
-    # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
-        
-        
-    #Test files
-    # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
-    # file_path = "../../data/Cricket/Cricket_TEST.ts"
-    # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
-    # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
-    
     
     X, y = load_ts_file(file_path)
 
@@ -264,9 +245,6 @@ def save_topk_balanced(shapelets, df, csv_path, num_classes=5, per_class=5):
     return df_balanced
 
 
-# -----------------------------
-# Visualization
-# -----------------------------
 def plot_shapelet_on_series(shapelet, X, series_id, start_pos, label, idx):
     dims, L = shapelet.shape
     series = X[series_id]
@@ -290,9 +268,9 @@ if __name__ == "__main__":
     X, y = load_data_multi()
     _, _, T = X.shape  # sequence length
 
-    L_min = int(0.1 * T)  # 10% length of T
-    L_max = int(0.75 * T)  # 75% length of T
-    L_step = max(5, int(0.05 * T))  # step size 5% of T or 5 if T is small
+    L_min = int(0.1 * T)
+    L_max = int(0.75 * T)
+    L_step = max(5, int(0.05 * T)) 
 
     L_list = list(range(L_min, L_max + 1, L_step))
     print(f"\n Auto Generated Shapelet Lengths: {L_list}\n")

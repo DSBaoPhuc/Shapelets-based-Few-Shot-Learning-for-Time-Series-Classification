@@ -11,6 +11,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from copy import deepcopy
 import random
 import matplotlib.pyplot as plt
+import os
+from datetime import datetime
 
 # -----------------------------
 # Utility: load / pad
@@ -317,12 +319,20 @@ def test_model(model, X_train, y_train, X_test, y_test):
 # Run full training & testing
 # -----------------------------
 if __name__ == "__main__":
-    train_path = "Shapelet_extract/shapelets_JapaneseVowels.csv"
-    test_path = "Shapelet_extract/Shapelet_Test/shapelets_JapaneseVowels_test.csv"
+    # train_path = "Shapelet_extract/shapelets_BasicMotions.csv"
+    # test_path = "Shapelet_extract/Test_set/BasicMotions_test.csv"
     
-    # train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary_95_train.csv"
-    # # test_path = "shapelets_UWaveGestureLibrary.csv"
-    # test_path = "Shapelet_extract/Shapelet_Test/shapelets_UWaveGestureLibrary_95_test.csv"
+    # train_path = "Shapelet_extract/shapelets_JapaneseVowels.csv"
+    # test_path = "Shapelet_extract/Test_set/JapaneseVowels_test.csv"
+    
+    # train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary.csv"
+    # test_path = "Shapelet_extract/Test_set/UWaveGestureLibrary_test.csv"
+    
+    train_path = "Shapelet_extract/shapelets_EthanolConcentration.csv"
+    test_path = "Shapelet_extract/Test_set/EthanolConcentration_test.csv"
+    
+    # train_path = "Shapelet_extract/shapelets_SelfRegulationSCP2.csv"
+    # test_path = "Shapelet_extract/Test_set/SelfRegulationSCP2_test.csv"
 
     X_train, y_train = load_shapelet_csv_multidim(train_path)
     X_test, y_test = load_shapelet_csv_multidim(test_path)
@@ -337,8 +347,10 @@ if __name__ == "__main__":
     model, history = train_model(
         X_train, y_train,
         episodes=2000,
-        N=5, K=1, Q=4,
-        # N=3, K=3, Q=3,
+        # N=5, K=1, Q=4, #JV dataset
+        # N=2, K=5, Q=5,
+        N=2, K=1, Q=3,
+        # N=2, K=3, Q=3,
         
         episodes_per_batch=8,
         emb_dim=256,
@@ -347,12 +359,42 @@ if __name__ == "__main__":
         device=None
     )
 
+    # Test
+    test_model(model, X_train, y_train, X_test, y_test)
+
     # Plot
     losses = history["loss"]
     accs = history["acc"]
     epochs = np.arange(1, len(losses) + 1)
+    
+    # ensure results dir
+    out_dir = "Training_results"
+    os.makedirs(out_dir, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    plt.figure(figsize=(10,4))
+    #Combined figure (loss + acc)
+    fig = plt.figure(figsize=(10,4))
+
+    ax1 = fig.add_subplot(1,2,1)
+    ax1.plot(epochs, losses)
+    ax1.set_xlabel("Episode")
+    ax1.set_ylabel("Loss")
+    ax1.set_title("Training Loss")
+    ax1.grid(True)
+
+    ax2 = fig.add_subplot(1,2,2)
+    ax2.plot(epochs, accs)
+    ax2.set_xlabel("Episode")
+    ax2.set_ylabel("Accuracy")
+    ax2.set_title("Training Accuracy")
+    ax2.grid(True)
+
+    # plt.tight_layout()
+    combined_path = os.path.join(out_dir, f"training_loss_acc_{ts}.png")
+    plt.savefig(combined_path, dpi=200, bbox_inches="tight")
+    print(f"Saved combined plot: {combined_path}")
+
+    # plt.figure(figsize=(10,4))
     # subplot 1: loss
     plt.subplot(1,2,1)
     plt.plot(epochs, losses)
@@ -371,6 +413,3 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
-
-    # Test
-    test_model(model, X_train, y_train, X_test, y_test)

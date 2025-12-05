@@ -34,8 +34,8 @@ def load_data_multi():
     # file_path = "../../data/JapaneseVowels/JapaneseVowels_eq_TRAIN.ts" # JapaneseVowels
     # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TRAIN.ts" # UWaveGestureLibrary   
     # file_path = "../../data/PEMS-SF/PEMS-SF_TRAIN.ts" # PEMS-SF 
-    file_path = "../../data/EthanolConcentration/EthanolConcentration_TRAIN.ts" # EthanolConcentration
-    # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TRAIN.ts" # SCP2
+    # file_path = "../../data/EthanolConcentration/EthanolConcentration_TRAIN.ts" # EthanolConcentration
+    # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TRAIN.ts" # SCP1
     # file_path = "../../data/Heartbeat/Heartbeat_TRAIN.ts" # Heartbeat        
     # file_path = "../../data/Car/Car_TRAIN.ts" # Car
     # file_path = "../../data/Cricket/Cricket_TRAIN.ts" # Cricket
@@ -44,12 +44,12 @@ def load_data_multi():
     #Test files
     # file_path = "../../data/UWaveGestureLibrary/UWaveGestureLibrary_TEST.ts" # UWaveGestureLibrary
     # file_path = "../../data/JapaneseVowels/JapaneseVowels_eq_TEST.ts" # JapaneseVowels
-    # file_path = "../../data/Handwriting/Handwriting_TEST.ts"
+    file_path = "../../data/Handwriting/Handwriting_TEST.ts"
     # file_path = "../../data/BasicMotions/BasicMotions_TEST.ts"
     # file_path = "../../data/Cricket/Cricket_TEST.ts"
     # file_path = "../../data/Epilepsy/Epilepsy_TEST.ts"
     # file_path = "../../data/AtrialFibrillation/AtrialFibrillation_TEST.ts" # AtrialFibrillation
-    # file_path = "../../data/SelfRegulationSCP2/SelfRegulationSCP2_TEST.ts" # SCP2
+    # file_path = "../../data/SelfRegulationSCP1/SelfRegulationSCP1_TEST.ts" # SCP2
     # file_path = "../../data/EthanolConcentration/EthanolConcentration_TEST.ts" # EthanolConcentration
     
     
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     X, y = load_data_multi()
     _, _, T = X.shape  # sequence length
 
-    L_min = int(0.2 * T)  # 20% length of T
+    L_min = int(0.1 * T)  # 20% length of T
     L_max = int(0.7 * T)  # 70% length of T
     L_step = max(5, int(0.1 * T))  # step size 10% of T or 5 if T is small
 
@@ -107,13 +107,9 @@ if __name__ == "__main__":
     df_scores = evaluate_multivariate_shapelets(shapelets, X, y)
 
     df_topk = save_topk_balanced(
-        shapelets, df_scores, "shapelets_EthanolConcentration.csv",
+        shapelets, df_scores, "shapelets_PEMS-SF.csv",
         num_classes=len(np.unique(y)), per_class=10
         
-        # # 1 dim
-        # shapelets, df_scores, "shapelets_Car.csv",
-        # num_classes=len(np.unique(y)), per_class=10
-        
-        # shapelets, df_scores, "shapelets_EthanolConcentration_test.csv",
+        # shapelets, df_scores, "shapelets_Handwriting_test.csv",
         # num_classes=len(np.unique(y)), per_class=40
     )
