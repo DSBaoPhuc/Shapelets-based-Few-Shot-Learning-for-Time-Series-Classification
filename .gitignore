@@ -1,10 +1,7 @@
 env
 __pycache__
-data
-Shapelet_extract
 Univariate
 Result
 save_model
-Composite_Score
-Shapelets_imgs
-Training_results
+src_rp
+Discriminative_data
