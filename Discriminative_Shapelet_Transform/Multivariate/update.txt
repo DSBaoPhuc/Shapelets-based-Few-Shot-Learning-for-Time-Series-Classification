@@ -1,7 +1,0 @@
-- Sử dụng bộ train = UWaveGestureLibrary_95 (Shapelet_extract: 5 mẫu mỗi sample) và test = UWaveGestureLibrary_95 (10 mẫu mỗi sample) 
-với N=2,K=2,Q=3 episode=2000 episodes_per_batch=8 emb_dim=256 => acc = 95%
-
-- Sử dụng bộ train = JapaneseVowels (Shapelet_extract: 10 mẫu mỗi sample) và test = JapaneseVowels_test (40 mẫu mỗi sample) 
-với N=5,K=1,Q=4 episode=2000 episodes_per_batch=8 emb_dim=256 => acc = 87.5%
-
-Sử dụng bộ train = BasicMotions (Shapelet_extract: 10 mẫu mỗi sample) và test = BasicMotions (20 mẫu mỗi sample) acc = 100%

@@ -193,7 +193,7 @@ with tab2:
                 df_sorted = df.sort_values(by="Composite_Score", ascending=False)
                 df_best = df_sorted.groupby("true_class").head(1).sort_values("true_class").reset_index(drop=True)
                 
-                display_cols = ['id', 'true_class', 'start', 'length', 'F_stat', 'IG', 'Composite_Score']
+                display_cols = ['id', 'true_class', 'length', 'F_stat', "Separability", 'IG', 'Composite_Score']
                 final_cols = [c for c in display_cols if c in df_best.columns]
                 
                 st.dataframe(df_best[final_cols], use_container_width=True)
