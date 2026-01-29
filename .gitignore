@@ -2,6 +2,5 @@ env
 __pycache__
 Univariate
 Result
-save_model
 src_rp
-Discriminative_data
+data

@@ -71,14 +71,20 @@ DATASET_DESCRIPTIONS = {
 }
 
 # --- [UPDATED] STATIC COMPARISON TABLE DATA ---
-# Đổi tên cột để gắn tham chiếu [1]
 STATIC_COMPARISON_DATA = {
     "Dataset": [
         "BasicMotions", "EthanolConcentration", "FaceDetection", "Handwriting", 
         "JapaneseVowels", "PEMS-SF", "SelfRegulationSCP1", "SelfRegulationSCP2", "SpokenArabicDigits", "UWaveGestureLibrary"
     ],
+    # dataset information (Dimensions, Length, Class, Train/Test Size)
+    "Train Size": [40, 261, 5890, 150, 270, 267, 268, 200, 6599, 120],
+    "Test Size":  [40, 263, 3524, 850, 370, 173, 293, 180, 2199, 320],
+    "Dimensions": [6, 3, 144, 3, 12, 963, 6, 7, 13, 3],
+    "Length":     [100, 1751, 62, 152, 29, 144, 896, 1152, 93, 315],
+    "Classes":    [4, 4, 2, 26, 9, 7, 2, 2, 10, 8],
+    # Accuracy
     "Paper Accuracy [1] (%)": [100, 52.1, 68.6, 36.4, 78.7, 49.6, 88.5, 75.2, 66.7, 78.2],
-    "Avg Accuracy (%)": [98.8, 64.7, 73.2, 53.6, 83.5, 55.7, 90.4, 78.2, 70.8, 95.53]
+    "Avg Accuracy (%)":       [98.8, 64.7, 73.2, 53.6, 83.5, 55.7, 90.4, 78.2, 70.8, 95.53]
 }
 
 # ==========================================
@@ -139,7 +145,7 @@ with col3:
 # --- SHOW BILINGUAL DESCRIPTION ---
 desc_data = DATASET_DESCRIPTIONS.get(selected_dataset, {"vi": "Chưa có mô tả.", "en": "No description available."})
 st.info(f"""
-**📝 Description:**
+**Data Description:**
 * {desc_data['en']}
 * {desc_data['vi']}
 """)
@@ -233,7 +239,6 @@ def highlight_selected(row):
         return ['background-color: #d1e7dd; font-weight: bold; color: black'] * len(row)
     return [''] * len(row)
 
-# Cập nhật format cho cột tên mới
 styled_df = df_static.style.format({
     "Paper Accuracy [1] (%)": "{:.2f}",
     "Avg Accuracy (%)": "{:.2f}"

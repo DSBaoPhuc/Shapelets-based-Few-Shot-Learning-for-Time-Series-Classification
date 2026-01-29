@@ -264,7 +264,7 @@ def proto_train_step(model, opt, X, y, device, N=2, K=2, Q=3, episodes_per_batch
 
 
 def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4,
-                emb_dim=128, lr=3e-4, weight_decay=1e-4, device=None):
+                emb_dim=128, lr=3e-4, weight_decay=1e-4, device=None, save_path=None):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     in_channels = X.shape[1]
@@ -291,6 +291,16 @@ def train_model(X, y, episodes=200, N=2, K=2, Q=3, episodes_per_batch=4,
             best_model = deepcopy(model.state_dict())
 
     model.load_state_dict(best_model)
+    
+    if save_path is not None:
+        torch.save({
+            "model_state_dict": model.state_dict(),
+            "emb_dim": emb_dim,
+            "in_channels": in_channels,
+            "N": N, "K": K, "Q": Q
+        }, save_path)
+        print(f"Model saved to: {save_path}")
+        
     return model, history
 
 # -----------------------------
@@ -328,11 +338,17 @@ if __name__ == "__main__":
     # train_path = "Shapelet_extract/shapelets_UWaveGestureLibrary.csv"
     # test_path = "Shapelet_extract/Test_set/UWaveGestureLibrary_test.csv"
     
-    train_path = "Shapelet_extract/shapelets_EthanolConcentration.csv"
-    test_path = "Shapelet_extract/Test_set/EthanolConcentration_test.csv"
+    # train_path = "Shapelet_extract/shapelets_EthanolConcentration.csv"
+    # test_path = "Shapelet_extract/Test_set/EthanolConcentration_test.csv"
     
     # train_path = "Shapelet_extract/shapelets_SelfRegulationSCP2.csv"
     # test_path = "Shapelet_extract/Test_set/SelfRegulationSCP2_test.csv"
+    
+    # train_path = "Shapelet_extract/shapelets_SelfRegulationSCP1.csv"
+    # test_path = "Shapelet_extract/Test_set/SelfRegulationSCP1_test.csv"
+    
+    train_path = "Shapelet_extract/shapelets_Heartbeat.csv"
+    test_path = "Shapelet_extract/Test_set/Heartbeat_test.csv"
 
     X_train, y_train = load_shapelet_csv_multidim(train_path)
     X_test, y_test = load_shapelet_csv_multidim(test_path)
@@ -342,21 +358,26 @@ if __name__ == "__main__":
 
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
+    
+    model_path = f"saved_models/Heartbeat.pt"
+    os.makedirs("saved_models", exist_ok=True)
+
 
     # Training
     model, history = train_model(
         X_train, y_train,
         episodes=2000,
-        # N=5, K=1, Q=4, #JV dataset
+        # N=5, K=1, Q=4, J
         # N=2, K=5, Q=5,
-        N=2, K=1, Q=3,
-        # N=2, K=3, Q=3,
+        # N=2, K=1, Q=3,
+        N=2, K=3, Q=2,
         
         episodes_per_batch=8,
         emb_dim=256,
         lr=3e-4,
         weight_decay=1e-4,
-        device=None
+        device=None,
+        save_path=model_path
     )
 
     # Test
@@ -390,9 +411,9 @@ if __name__ == "__main__":
     ax2.grid(True)
 
     # plt.tight_layout()
-    combined_path = os.path.join(out_dir, f"training_loss_acc_{ts}.png")
-    plt.savefig(combined_path, dpi=200, bbox_inches="tight")
-    print(f"Saved combined plot: {combined_path}")
+    # combined_path = os.path.join(out_dir, f"training_loss_acc_{ts}.png")
+    # plt.savefig(combined_path, dpi=200, bbox_inches="tight")
+    # print(f"Saved combined plot: {combined_path}")
 
     # plt.figure(figsize=(10,4))
     # subplot 1: loss
