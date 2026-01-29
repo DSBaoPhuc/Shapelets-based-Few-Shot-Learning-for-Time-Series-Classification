@@ -1,5 +1,7 @@
 USER GUIDE for Shapelet-based Few-Shot Learning for Multivariate Time Series Classification
 
+Source Code on Github link: https://github.com/DSBaoPhuc/Shapelets-based-Few-Shot-Learning-for-Time-Series-Classification.git
+
 Shapelet-based Few-Shot Learning Pipeline
 ========================================
 
