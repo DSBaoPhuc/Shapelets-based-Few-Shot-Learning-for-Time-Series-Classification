@@ -1,0 +1,95 @@
+USER GUIDE for Shapelet-based Few-Shot Learning for Multivariate Time Series Classification
+
+Shapelet-based Few-Shot Learning Pipeline
+========================================
+
+This document describes the complete workflow for extracting shapelets,
+encoding them into embeddings, training a few-shot learning model, and
+visualizing results using a Streamlit dashboard.
+
+--------------------------------------------------
+PROJECT STRUCTURE
+--------------------------------------------------
+
+- data/
+  Contains time-series datasets (UNIVARIATE / MULTIVARIATE) in .ts or .arff format.
+
+- Discriminative_Shapelet_Transform/Multivariate/
+  Source code for multivariate shapelet extraction.
+
+- env/
+  Python virtual environment directory (optional).
+  On Windows, activation script is located at env/Scripts/Activate.ps1.
+
+- requirements.txt
+  List of required Python dependencies.
+
+- multi_extract.py
+  Main script for discriminative shapelet extraction.
+
+- CNN_FewShot/
+  Module defining CNN encoder architecture and few-shot training procedure.
+
+- app_v2.py
+  Streamlit-based dashboard for result visualization and inference.
+
+--------------------------------------------------
+ENVIRONMENT SETUP
+--------------------------------------------------
+
+1. Create or activate virtual environment (Windows PowerShell):
+
+   > & "env\Scripts\Activate.ps1"
+
+2. Install required dependencies:
+
+   > pip install -r requirements.txt
+
+3. Navigate to multivariate shapelet extraction directory:
+
+   > cd Discriminative_Shapelet_Transform/Multivariate
+
+--------------------------------------------------
+PHASE 1 — SHAPELET EXTRACTION
+--------------------------------------------------
+
+Run the shapelet extraction script:
+
+   > python multi_extract.py
+
+Notes:
+- Extraction parameters (e.g., shapelet length, number of shapelets)
+  can be adjusted via command-line arguments or script configuration.
+- Ensure dataset file names are correctly specified before execution.
+
+--------------------------------------------------
+PHASE 2 — SHAPELET ENCODING & MODEL TRAINING
+--------------------------------------------------
+
+After extracting candidate shapelets, each shapelet is encoded into
+a fixed-dimensional embedding and used to train a few-shot learning model.
+
+Run the training script:
+
+   > python CNN_FewShot.py
+
+Notes:
+- Update input paths to match extracted shapelet files.
+- Trained models are saved in .pt format for later inference.
+
+--------------------------------------------------
+DASHBOARD & INFERENCE
+--------------------------------------------------
+
+Launch the Streamlit dashboard:
+
+   > streamlit run app_v2.py
+
+The dashboard allows:
+- Visualization of extracted shapelets
+- Inspection of training results
+- Embedding-based prediction and class assignment for new shapelets
+
+--------------------------------------------------
+END OF USER GUIDE
+--------------------------------------------------
