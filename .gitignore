@@ -3,4 +3,5 @@ __pycache__
 Univariate
 Result
 src_rp
-data
+!data/
+!data/**/*.ts
